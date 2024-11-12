@@ -88,7 +88,7 @@ configure_cloudflared() {
     else
         echo "/etc/cloudflared directory already exists"
     fi
-    
+
     if [ -f /etc/cloudflared/config.yml ]; then
         TIMESTAMP=$(date +%Y%m%d%H%M%S)
         sudo cp /etc/cloudflared/config.yml /etc/cloudflared/config.yml.bak.${TIMESTAMP} || error "Failed to create backup of existing config file"
@@ -138,7 +138,15 @@ EOF
 enable_and_start_service() {
     echo "Enabling and starting the cloudflared service"
     sudo systemctl enable cloudflared || error "Failed to enable cloudflared service"
-    sudo systemctl start cloudflared || error "Failed to start cloudflared service"
+    
+    if sudo systemctl is-active --quiet cloudflared; then
+        echo "cloudflared service is already running, restarting it"
+        sudo systemctl restart cloudflared || error "Failed to restart cloudflared service"
+    else
+        echo "Starting cloudflared service"
+        sudo systemctl start cloudflared || error "Failed to start cloudflared service"
+    fi
+    
     echo "Verifying that the cloudflared service is running"
     sudo systemctl status cloudflared || error "cloudflared service is not running"
 }
