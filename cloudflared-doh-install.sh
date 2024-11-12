@@ -83,8 +83,18 @@ configure_cloudflared() {
 proxy-dns: true
 proxy-dns-port: 5053
 proxy-dns-upstream:
- - https://1.1.1.1/dns-query
- - https://1.0.0.1/dns-query
+#  - https://1.1.1.1/dns-query
+#  - https://1.0.0.1/dns-query
+# "doh.la.ahadns.net" is a public DNS over HTTPS server operated by AhaDNS
+# A zero logging DNS with support for DNS-over-HTTPS (DoH) & DNS-over-TLS (DoT).
+# Blocks ads, malware, trackers, viruses, ransomware, telemetry and more.
+# No persistent logs. DNSSEC. Hosted in Amsterdam, Netherlands
+ - https://doh.la.ahadns.net/dns-query
+# Public DoH resolver operated by the Digital Society (https://www.digitale-gesellschaft.ch).
+# Hosted in Zurich, Switzerland. Non-logging, non-filtering, supports DNSSEC.
+ - dns.digitale-gesellschaft.ch/dns-query
+
+ - 
 EOF
 }
 
