@@ -1,6 +1,6 @@
-# cloudflared-install
+# cloudflared-doh-install
 
-Script to install and configure cloudflared on RaspberryPI and GNU/Linux
+Script to install and configure cloudflared (DoH) on RaspberryPi and GNU/Linux
 
 ## How to Run the Script
 
@@ -30,3 +30,5 @@ After installing cloudflared, you need to configure Pi-hole to use it as a DNS-o
 2. Go to **Settings** > **DNS**.
 3. Under **Upstream DNS Servers**, select **Custom 1 (IPv4)** and enter `127.0.0.1#5053`.
 4. Scroll down and click **Save**.
+
+For more detailed instructions, please refer to the [official Pi-hole documentation](https://docs.pi-hole.net/guides/dns/cloudflared/).
