@@ -21,7 +21,7 @@ You can fetch and run the script using either `curl` or `wget`.
 ### Using curl
 
 ```sh
-curl -o install.sh https://raw.githubusercontent.com/marcomc/cloudflared-doh-install/refs/heads/main/cloudflared-install.sh
+curl -o install.sh https://raw.githubusercontent.com/marcomc/cloudflared-doh-install/refs/heads/main/cloudflared-doh-install.sh
 chmod +x install.sh
 sudo ./install.sh
 ```
