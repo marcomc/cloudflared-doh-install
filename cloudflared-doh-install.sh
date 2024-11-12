@@ -150,15 +150,11 @@ enable_and_start_service() {
     sudo systemctl status cloudflared || error "cloudflared service is not running"
 }
 
-# Function to create a cron job for updating cloudflared
+# Function to create a system cron job for updating cloudflared
 create_cron_job() {
-    CRON_JOB="0 0 * * * sudo wget -O /usr/local/bin/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH} && sudo chmod +x /usr/local/bin/cloudflared && sudo systemctl restart cloudflared"
-    (crontab -l 2>/dev/null | grep -F "${CRON_JOB}") || true
-    TEMP_CRON=$(mktemp)
-    (crontab -l 2>/dev/null; echo "${CRON_JOB}") > "${TEMP_CRON}" || true
-    crontab "${TEMP_CRON}" || error "Failed to create cron job"
-    rm "${TEMP_CRON}"
-    echo "Cron job for updating cloudflared created"
+    CRON_JOB="0 0 * * * root wget -O /usr/local/bin/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH} && chmod +x /usr/local/bin/cloudflared && systemctl restart cloudflared"
+    echo "${CRON_JOB}" | sudo tee /etc/cron.d/cloudflared-update > /dev/null || error "Failed to create system cron job"
+    echo "System cron job for updating cloudflared created"
 }
 
 # Install curl if not already installed
