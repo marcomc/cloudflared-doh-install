@@ -108,7 +108,7 @@ proxy-dns-upstream:
  - https://doh.la.ahadns.net/dns-query
 # Public DoH resolver operated by the Digital Society (https://www.digitale-gesellschaft.ch).
 # Hosted in Zurich, Switzerland. Non-logging, non-filtering, supports DNSSEC.
- - dns.digitale-gesellschaft.ch/dns-query
+ - https://dns.digitale-gesellschaft.ch/dns-query
 
  - 
 EOF
