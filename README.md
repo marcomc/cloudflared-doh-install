@@ -9,7 +9,7 @@ You can fetch and run the script using either `curl` or `wget`.
 ### Using curl
 
 ```sh
-curl -O https://raw.githubusercontent.com/yourusername/cloudflared-install/main/install.sh
+curl -o install.sh https://raw.githubusercontent.com/marcomc/cloudflared-install/refs/heads/main/cloudflared-install.sh
 chmod +x install.sh
 ./install.sh
 ```
@@ -17,7 +17,7 @@ chmod +x install.sh
 ### Using wget
 
 ```sh
-wget https://raw.githubusercontent.com/yourusername/cloudflared-install/main/install.sh
+wget https://raw.githubusercontent.com/marcomc/cloudflared-install/refs/heads/main/cloudflared-install.sh
 chmod +x install.sh
 ./install.sh
 ```
