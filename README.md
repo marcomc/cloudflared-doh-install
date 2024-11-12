@@ -46,6 +46,13 @@ After installing cloudflared, you need to configure Pi-hole to use it as a DNS-o
 
 For more detailed instructions, please refer to the [official Pi-hole documentation](https://docs.pi-hole.net/guides/dns/cloudflared/).
 
+## Testing cloudflared
+
+```sh
+sudo systemctl status cloudflared
+dig @localhost -p 5053 txt debug.opendns.com
+```
+
 ## Uninstalling cloudflared
 
 If you need to uninstall cloudflared, you can use the `--uninstall` option with the script:
