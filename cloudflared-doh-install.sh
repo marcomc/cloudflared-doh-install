@@ -110,7 +110,6 @@ proxy-dns-upstream:
 # Hosted in Zurich, Switzerland. Non-logging, non-filtering, supports DNSSEC.
  - https://dns.digitale-gesellschaft.ch/dns-query
 
- - 
 EOF
 }
 
