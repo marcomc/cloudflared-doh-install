@@ -23,7 +23,7 @@ You can fetch and run the script using either `curl` or `wget`.
 ```sh
 curl -o install.sh https://raw.githubusercontent.com/marcomc/cloudflared-doh-install/refs/heads/main/cloudflared-install.sh
 chmod +x install.sh
-./install.sh
+sudo ./install.sh
 ```
 
 ### Using wget
@@ -31,7 +31,7 @@ chmod +x install.sh
 ```sh
 wget https://raw.githubusercontent.com/marcomc/cloudflared-doh-install/refs/heads/main/cloudflared-doh-install.sh
 chmod +x install.sh
-./install.sh
+sudo ./install.sh
 ```
 
 ## Configuring Pi-hole

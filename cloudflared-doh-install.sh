@@ -25,12 +25,12 @@ install_curl() {
     if ! command -v curl &> /dev/null; then
         if command -v apt-get &> /dev/null; then
             echo "Installing curl using apt-get"
-            sudo apt-get update || error "Failed to update package list"
-            sudo apt-get install -y curl || error "Failed to install curl"
+            apt-get update || error "Failed to update package list"
+            apt-get install -y curl || error "Failed to install curl"
         elif command -v yum &> /dev/null; then
             echo "Installing curl using yum"
-            sudo yum update -y || error "Failed to update package list"
-            sudo yum install -y curl || error "Failed to install curl"
+            yum update -y || error "Failed to update package list"
+            yum install -y curl || error "Failed to install curl"
         else
             error "Unsupported package manager"
         fi
@@ -43,7 +43,7 @@ install_curl() {
 install_deb() {
     echo "Installing cloudflared on DEB-based system"
     wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb || error "Failed to download cloudflared DEB package"
-    sudo apt-get install -y ./cloudflared-linux-amd64.deb || error "Failed to install cloudflared DEB package"
+    apt-get install -y ./cloudflared-linux-amd64.deb || error "Failed to install cloudflared DEB package"
     rm cloudflared-linux-amd64.deb
 }
 
@@ -51,7 +51,7 @@ install_deb() {
 install_rpm() {
     echo "Installing cloudflared on RPM-based system"
     wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-x86_64.rpm || error "Failed to download cloudflared RPM package"
-    sudo yum install -y ./cloudflared-linux-x86_64.rpm || error "Failed to install cloudflared RPM package"
+    yum install -y ./cloudflared-linux-x86_64.rpm || error "Failed to install cloudflared RPM package"
     rm cloudflared-linux-x86_64.rpm
 }
 
@@ -69,14 +69,14 @@ download_cloudflared() {
         echo "Installing cloudflared for aarch64 architecture"
         URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64"
         curl -L "${URL}" -o cloudflared || error "Failed to download cloudflared"
-        sudo mv cloudflared /usr/local/bin/ || error "Failed to move cloudflared to /usr/local/bin/"
-        sudo chmod +x /usr/local/bin/cloudflared || error "Failed to make cloudflared executable"
+        mv cloudflared /usr/local/bin/ || error "Failed to move cloudflared to /usr/local/bin/"
+        chmod +x /usr/local/bin/cloudflared || error "Failed to make cloudflared executable"
     elif [[ "${ARCH}" == armv* ]]; then
         echo "Installing cloudflared for ARM architecture"
         URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm"
         curl -L "${URL}" -o cloudflared || error "Failed to download cloudflared"
-        sudo mv cloudflared /usr/local/bin/ || error "Failed to move cloudflared to /usr/local/bin/"
-        sudo chmod +x /usr/local/bin/cloudflared || error "Failed to make cloudflared executable"
+        mv cloudflared /usr/local/bin/ || error "Failed to move cloudflared to /usr/local/bin/"
+        chmod +x /usr/local/bin/cloudflared || error "Failed to make cloudflared executable"
     else
         error "Unsupported architecture: ${ARCH}"
     fi
@@ -86,24 +86,24 @@ download_cloudflared() {
 configure_cloudflared() {
     echo "Configuring cloudflared to run as a DNS over HTTPS proxy"
     if ! id -u cloudflared &>/dev/null; then
-        sudo useradd -s /usr/sbin/nologin -r -M cloudflared || error "Failed to add cloudflared user"
+        useradd -s /usr/sbin/nologin -r -M cloudflared || error "Failed to add cloudflared user"
     else
         echo "User cloudflared already exists"
     fi
 
     if [ ! -d /etc/cloudflared ]; then
-        sudo mkdir -p /etc/cloudflared || error "Failed to create /etc/cloudflared directory"
+        mkdir -p /etc/cloudflared || error "Failed to create /etc/cloudflared directory"
     else
         echo "/etc/cloudflared directory already exists"
     fi
 
     if [ -f /etc/cloudflared/config.yml ]; then
         TIMESTAMP=$(date +%Y%m%d%H%M%S)
-        sudo cp /etc/cloudflared/config.yml /etc/cloudflared/config.yml.bak.${TIMESTAMP} || error "Failed to create backup of existing config file"
+        cp /etc/cloudflared/config.yml /etc/cloudflared/config.yml.bak.${TIMESTAMP} || error "Failed to create backup of existing config file"
         echo "Backup of existing config file created with timestamp ${TIMESTAMP}"
     fi
 
-    sudo tee /etc/cloudflared/config.yml > /dev/null <<EOF
+    tee /etc/cloudflared/config.yml > /dev/null <<EOF
 proxy-dns: true
 proxy-dns-port: 5053
 proxy-dns-upstream:
@@ -124,7 +124,7 @@ EOF
 # Function to create a systemd service for cloudflared
 create_systemd_service() {
     echo "Creating systemd service for cloudflared"
-    sudo tee /etc/systemd/system/cloudflared.service > /dev/null <<EOF
+    tee /etc/systemd/system/cloudflared.service > /dev/null <<EOF
 [Unit]
 Description=cloudflared DNS over HTTPS proxy
 After=network.target
@@ -144,45 +144,45 @@ EOF
 # Function to enable and start the cloudflared service
 enable_and_start_service() {
     echo "Enabling and starting the cloudflared service"
-    sudo systemctl enable cloudflared || error "Failed to enable cloudflared service"
+    systemctl enable cloudflared || error "Failed to enable cloudflared service"
     
-    if sudo systemctl is-active --quiet cloudflared; then
+    if systemctl is-active --quiet cloudflared; then
         echo "cloudflared service is already running, restarting it"
-        sudo systemctl restart cloudflared || error "Failed to restart cloudflared service"
+        systemctl restart cloudflared || error "Failed to restart cloudflared service"
     else
         echo "Starting cloudflared service"
-        sudo systemctl start cloudflared || error "Failed to start cloudflared service"
+        systemctl start cloudflared || error "Failed to start cloudflared service"
     fi
     
     echo "Verifying that the cloudflared service is running"
-    sudo systemctl status cloudflared || error "cloudflared service is not running"
+    systemctl status cloudflared || error "cloudflared service is not running"
 }
 
 # Function to create a system cron job for updating cloudflared
 create_cron_job() {
     CRON_JOB="0 0 * * * root wget -O /usr/local/bin/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH} && chmod +x /usr/local/bin/cloudflared && systemctl restart cloudflared"
-    echo "${CRON_JOB}" | sudo tee /etc/cron.d/cloudflared-update > /dev/null || error "Failed to create system cron job"
+    echo "${CRON_JOB}" | tee /etc/cron.d/cloudflared-update > /dev/null || error "Failed to create system cron job"
     echo "System cron job for updating cloudflared created"
 }
 
 # Function to uninstall cloudflared and remove all files created by the script
 uninstall_cloudflared() {
     echo "Stopping cloudflared service"
-    sudo systemctl stop cloudflared || error "Failed to stop cloudflared service"
+    systemctl stop cloudflared || error "Failed to stop cloudflared service"
     echo "Disabling cloudflared service"
-    sudo systemctl disable cloudflared || error "Failed to disable cloudflared service"
+    systemctl disable cloudflared || error "Failed to disable cloudflared service"
     echo "Removing cloudflared systemd service file"
-    sudo rm /etc/systemd/system/cloudflared.service || error "Failed to remove cloudflared systemd service file"
+    rm /etc/systemd/system/cloudflared.service || error "Failed to remove cloudflared systemd service file"
     echo "Removing /etc/cloudflared directory"
-    sudo rm -rf /etc/cloudflared || error "Failed to remove /etc/cloudflared directory"
+    rm -rf /etc/cloudflared || error "Failed to remove /etc/cloudflared directory"
     echo "Removing cloudflared binary"
-    sudo rm /usr/local/bin/cloudflared || error "Failed to remove cloudflared binary"
+    rm /usr/local/bin/cloudflared || error "Failed to remove cloudflared binary"
     echo "Removing cloudflared cron job"
-    sudo rm /etc/cron.d/cloudflared-update || error "Failed to remove cloudflared cron job"
+    rm /etc/cron.d/cloudflared-update || error "Failed to remove cloudflared cron job"
     echo "Deleting cloudflared user"
-    sudo userdel cloudflared || error "Failed to delete cloudflared user"
+    userdel cloudflared || error "Failed to delete cloudflared user"
     echo "Reloading systemd daemon"
-    sudo systemctl daemon-reload || error "Failed to reload systemd daemon"
+    systemctl daemon-reload || error "Failed to reload systemd daemon"
     echo "cloudflared uninstalled successfully"
 }
 
