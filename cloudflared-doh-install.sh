@@ -77,8 +77,24 @@ download_cloudflared() {
 # Function to configure cloudflared
 configure_cloudflared() {
     echo "Configuring cloudflared to run as a DNS over HTTPS proxy"
-    sudo useradd -s /usr/sbin/nologin -r -M cloudflared || error "Failed to add cloudflared user"
-    sudo mkdir -p /etc/cloudflared || error "Failed to create /etc/cloudflared directory"
+    if ! id -u cloudflared &>/dev/null; then
+        sudo useradd -s /usr/sbin/nologin -r -M cloudflared || error "Failed to add cloudflared user"
+    else
+        echo "User cloudflared already exists"
+    fi
+
+    if [ ! -d /etc/cloudflared ]; then
+        sudo mkdir -p /etc/cloudflared || error "Failed to create /etc/cloudflared directory"
+    else
+        echo "/etc/cloudflared directory already exists"
+    fi
+    
+    if [ -f /etc/cloudflared/config.yml ]; then
+        TIMESTAMP=$(date +%Y%m%d%H%M%S)
+        sudo cp /etc/cloudflared/config.yml /etc/cloudflared/config.yml.bak.${TIMESTAMP} || error "Failed to create backup of existing config file"
+        echo "Backup of existing config file created with timestamp ${TIMESTAMP}"
+    fi
+
     sudo tee /etc/cloudflared/config.yml > /dev/null <<EOF
 proxy-dns: true
 proxy-dns-port: 5053
@@ -142,11 +158,16 @@ create_cron_job() {
 install_curl
 
 # Download cloudflared
-download_cloudflared
+if ! command -v cloudflared &> /dev/null; then
+    download_cloudflared
+    # Verify the installation
+    echo "Verifying cloudflared installation"
+    cloudflared -v || error "cloudflared verification failed"
+else
+    echo "cloudflared is already installed"
+fi
 
-# Verify the installation
-echo "Verifying cloudflared installation"
-cloudflared -v || error "cloudflared verification failed"
+
 
 # Configure cloudflared
 configure_cloudflared
