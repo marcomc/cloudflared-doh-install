@@ -47,15 +47,31 @@ install_rpm() {
     rm cloudflared-linux-x86_64.rpm
 }
 
-# Function to create a cron job for updating cloudflared
-create_cron_job() {
-    CRON_JOB="0 0 * * * sudo wget -O /usr/local/bin/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH} && sudo chmod +x /usr/local/bin/cloudflared && sudo systemctl restart cloudflared"
-    (crontab -l 2>/dev/null | grep -F "${CRON_JOB}") || true
-    TEMP_CRON=$(mktemp)
-    (crontab -l 2>/dev/null; echo "${CRON_JOB}") > "${TEMP_CRON}" || true
-    crontab "${TEMP_CRON}" || error "Failed to create cron job"
-    rm "${TEMP_CRON}"
-    echo "Cron job for updating cloudflared created"
+# Function to download cloudflared based on the architecture
+download_cloudflared() {
+    if [[ "${ARCH}" == "x86_64" ]]; then
+        if [[ -f /etc/debian_version ]]; then
+            install_deb
+        elif [[ -f /etc/redhat-release ]]; then
+            install_rpm
+        else
+            error "Unsupported Linux distribution for x86_64 architecture"
+        fi
+    elif [[ "${ARCH}" == "aarch64" ]]; then
+        echo "Installing cloudflared for aarch64 architecture"
+        URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64"
+        curl -L "${URL}" -o cloudflared || error "Failed to download cloudflared"
+        sudo mv cloudflared /usr/local/bin/ || error "Failed to move cloudflared to /usr/local/bin/"
+        sudo chmod +x /usr/local/bin/cloudflared || error "Failed to make cloudflared executable"
+    elif [[ "${ARCH}" == armv* ]]; then
+        echo "Installing cloudflared for ARM architecture"
+        URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm"
+        curl -L "${URL}" -o cloudflared || error "Failed to download cloudflared"
+        sudo mv cloudflared /usr/local/bin/ || error "Failed to move cloudflared to /usr/local/bin/"
+        sudo chmod +x /usr/local/bin/cloudflared || error "Failed to make cloudflared executable"
+    else
+        error "Unsupported architecture: ${ARCH}"
+    fi
 }
 
 # Function to configure cloudflared
@@ -101,31 +117,15 @@ enable_and_start_service() {
     sudo systemctl status cloudflared || error "cloudflared service is not running"
 }
 
-# Function to download cloudflared based on the architecture
-download_cloudflared() {
-    if [[ "${ARCH}" == "x86_64" ]]; then
-        if [[ -f /etc/debian_version ]]; then
-            install_deb
-        elif [[ -f /etc/redhat-release ]]; then
-            install_rpm
-        else
-            error "Unsupported Linux distribution for x86_64 architecture"
-        fi
-    elif [[ "${ARCH}" == "aarch64" ]]; then
-        echo "Installing cloudflared for aarch64 architecture"
-        URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64"
-        curl -L "${URL}" -o cloudflared || error "Failed to download cloudflared"
-        sudo mv cloudflared /usr/local/bin/ || error "Failed to move cloudflared to /usr/local/bin/"
-        sudo chmod +x /usr/local/bin/cloudflared || error "Failed to make cloudflared executable"
-    elif [[ "${ARCH}" == "armv7l" ]]; then
-        echo "Installing cloudflared for armv7l architecture"
-        URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm"
-        curl -L "${URL}" -o cloudflared || error "Failed to download cloudflared"
-        sudo mv cloudflared /usr/local/bin/ || error "Failed to move cloudflared to /usr/local/bin/"
-        sudo chmod +x /usr/local/bin/cloudflared || error "Failed to make cloudflared executable"
-    else
-        error "Unsupported architecture: ${ARCH}"
-    fi
+# Function to create a cron job for updating cloudflared
+create_cron_job() {
+    CRON_JOB="0 0 * * * sudo wget -O /usr/local/bin/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH} && sudo chmod +x /usr/local/bin/cloudflared && sudo systemctl restart cloudflared"
+    (crontab -l 2>/dev/null | grep -F "${CRON_JOB}") || true
+    TEMP_CRON=$(mktemp)
+    (crontab -l 2>/dev/null; echo "${CRON_JOB}") > "${TEMP_CRON}" || true
+    crontab "${TEMP_CRON}" || error "Failed to create cron job"
+    rm "${TEMP_CRON}"
+    echo "Cron job for updating cloudflared created"
 }
 
 # Install curl if not already installed
