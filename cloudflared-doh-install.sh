@@ -8,6 +8,14 @@ error() {
     exit 1
 }
 
+# Function to display help message
+show_help() {
+    echo "Usage: $0 [OPTIONS]"
+    echo "Options:"
+    echo "  --help       Show this help message and exit"
+    echo "  --uninstall  Uninstall cloudflared and remove all files created by the script"
+}
+
 # Detect the architecture
 ARCH=$(uname -m)
 echo "Detected architecture: ${ARCH}"
@@ -157,8 +165,38 @@ create_cron_job() {
     echo "System cron job for updating cloudflared created"
 }
 
+# Function to uninstall cloudflared and remove all files created by the script
+uninstall_cloudflared() {
+    echo "Stopping cloudflared service"
+    sudo systemctl stop cloudflared || error "Failed to stop cloudflared service"
+    echo "Disabling cloudflared service"
+    sudo systemctl disable cloudflared || error "Failed to disable cloudflared service"
+    echo "Removing cloudflared systemd service file"
+    sudo rm /etc/systemd/system/cloudflared.service || error "Failed to remove cloudflared systemd service file"
+    echo "Removing /etc/cloudflared directory"
+    sudo rm -rf /etc/cloudflared || error "Failed to remove /etc/cloudflared directory"
+    echo "Removing cloudflared binary"
+    sudo rm /usr/local/bin/cloudflared || error "Failed to remove cloudflared binary"
+    echo "Removing cloudflared cron job"
+    sudo rm /etc/cron.d/cloudflared-update || error "Failed to remove cloudflared cron job"
+    echo "Deleting cloudflared user"
+    sudo userdel cloudflared || error "Failed to delete cloudflared user"
+    echo "Reloading systemd daemon"
+    sudo systemctl daemon-reload || error "Failed to reload systemd daemon"
+    echo "cloudflared uninstalled successfully"
+}
+
 # Install curl if not already installed
 install_curl
+
+# Parse command line arguments
+if [[ "$1" == "--help" ]]; then
+    show_help
+    exit 0
+elif [[ "$1" == "--uninstall" ]]; then
+    uninstall_cloudflared
+    exit 0
+fi
 
 # Download cloudflared
 if ! command -v cloudflared &> /dev/null; then
@@ -169,8 +207,6 @@ if ! command -v cloudflared &> /dev/null; then
 else
     echo "cloudflared is already installed"
 fi
-
-
 
 # Configure cloudflared
 configure_cloudflared

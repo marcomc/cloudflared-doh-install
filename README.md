@@ -4,7 +4,7 @@ Script to install and configure cloudflared (DoH) on RaspberryPi and GNU/Linux
 
 ## Importance of Installing cloudflared with DoH on Pi-hole
 
-Installing cloudflared with DNS-over-HTTPS (DoH) on a Pi-hole enhances your network's privacy and security by encrypting DNS queries, preventing eavesdropping and manipulation of DNS data by third parties.
+Installing cloudflared with DNS-over-HTTPS (DoH) on a Pi-hole enhances https://raw.githubusercontent.com/marcomc/cloudflared-doh-install/refs/heads/main/cloudflared-doh-install.sh of DNS data by third parties.
 
 ### Why Use cloudflared with Pi-hole?
 Using cloudflared with Pi-hole to enable DNS-over-HTTPS (DoH) provides several benefits:
@@ -21,7 +21,7 @@ You can fetch and run the script using either `curl` or `wget`.
 ### Using curl
 
 ```sh
-curl -o install.sh https://raw.githubusercontent.com/marcomc/cloudflared-doh-install/refs/heads/main/cloudflared-doh-install.sh
+curl -o install.sh https://raw.githubusercontent.com/marcomc/cloudflared-doh-install/refs/heads/main/cloudflared-install.sh
 chmod +x install.sh
 ./install.sh
 ```
