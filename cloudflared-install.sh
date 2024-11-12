@@ -2,9 +2,10 @@
 
 set -e
 
-# Function to print error messages to STDERR
+# Function to print error messages to STDERR and abort the script
 error() {
     echo "ERROR: $*" >&2
+    exit 1
 }
 
 # Detect the architecture
@@ -24,7 +25,6 @@ install_curl() {
             sudo yum install -y curl || error "Failed to install curl"
         else
             error "Unsupported package manager"
-            exit 1
         fi
     else
         echo "curl is already installed"
@@ -47,55 +47,35 @@ install_rpm() {
     rm cloudflared-linux-x86_64.rpm
 }
 
-# Install curl if not already installed
-install_curl
+# Function to create a cron job for updating cloudflared
+create_cron_job() {
+    CRON_JOB="0 0 * * * sudo wget -O /usr/local/bin/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH} && sudo chmod +x /usr/local/bin/cloudflared && sudo systemctl restart cloudflared"
+    (crontab -l 2>/dev/null | grep -F "${CRON_JOB}") || true
+    TEMP_CRON=$(mktemp)
+    (crontab -l 2>/dev/null; echo "${CRON_JOB}") > "${TEMP_CRON}" || true
+    crontab "${TEMP_CRON}" || error "Failed to create cron job"
+    rm "${TEMP_CRON}"
+    echo "Cron job for updating cloudflared created"
+}
 
-# Set the download URL based on the architecture
-if [[ "${ARCH}" == "x86_64" ]]; then
-    if [[ -f /etc/debian_version ]]; then
-        install_deb
-    elif [[ -f /etc/redhat-release ]]; then
-        install_rpm
-    else
-        error "Unsupported Linux distribution for x86_64 architecture"
-        exit 1
-    fi
-elif [[ "${ARCH}" == "aarch64" ]]; then
-    echo "Installing cloudflared for aarch64 architecture"
-    URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64"
-    curl -L "${URL}" -o cloudflared || error "Failed to download cloudflared"
-    sudo mv cloudflared /usr/local/bin/ || error "Failed to move cloudflared to /usr/local/bin/"
-    sudo chmod +x /usr/local/bin/cloudflared || error "Failed to make cloudflared executable"
-elif [[ "${ARCH}" == "armv7l" ]]; then
-    echo "Installing cloudflared for armv7l architecture"
-    URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm"
-    curl -L "${URL}" -o cloudflared || error "Failed to download cloudflared"
-    sudo mv cloudflared /usr/local/bin/ || error "Failed to move cloudflared to /usr/local/bin/"
-    sudo chmod +x /usr/local/bin/cloudflared || error "Failed to make cloudflared executable"
-else
-    error "Unsupported architecture: ${ARCH}"
-    exit 1
-fi
-
-# Verify the installation
-echo "Verifying cloudflared installation"
-cloudflared -v || error "cloudflared verification failed"
-
-# Configure cloudflared to run as a DNS over HTTPS proxy
-echo "Configuring cloudflared to run as a DNS over HTTPS proxy"
-sudo useradd -s /usr/sbin/nologin -r -M cloudflared || error "Failed to add cloudflared user"
-sudo mkdir -p /etc/cloudflared || error "Failed to create /etc/cloudflared directory"
-sudo tee /etc/cloudflared/config.yml > /dev/null <<EOF
+# Function to configure cloudflared
+configure_cloudflared() {
+    echo "Configuring cloudflared to run as a DNS over HTTPS proxy"
+    sudo useradd -s /usr/sbin/nologin -r -M cloudflared || error "Failed to add cloudflared user"
+    sudo mkdir -p /etc/cloudflared || error "Failed to create /etc/cloudflared directory"
+    sudo tee /etc/cloudflared/config.yml > /dev/null <<EOF
 proxy-dns: true
 proxy-dns-port: 5053
 proxy-dns-upstream:
  - https://1.1.1.1/dns-query
  - https://1.0.0.1/dns-query
 EOF
+}
 
-# Create a systemd service for cloudflared
-echo "Creating systemd service for cloudflared"
-sudo tee /etc/systemd/system/cloudflared.service > /dev/null <<EOF
+# Function to create a systemd service for cloudflared
+create_systemd_service() {
+    echo "Creating systemd service for cloudflared"
+    sudo tee /etc/systemd/system/cloudflared.service > /dev/null <<EOF
 [Unit]
 Description=cloudflared DNS over HTTPS proxy
 After=network.target
@@ -110,12 +90,62 @@ RestartSec=5s
 [Install]
 WantedBy=multi-user.target
 EOF
+}
+
+# Function to enable and start the cloudflared service
+enable_and_start_service() {
+    echo "Enabling and starting the cloudflared service"
+    sudo systemctl enable cloudflared || error "Failed to enable cloudflared service"
+    sudo systemctl start cloudflared || error "Failed to start cloudflared service"
+    echo "Verifying that the cloudflared service is running"
+    sudo systemctl status cloudflared || error "cloudflared service is not running"
+}
+
+# Function to download cloudflared based on the architecture
+download_cloudflared() {
+    if [[ "${ARCH}" == "x86_64" ]]; then
+        if [[ -f /etc/debian_version ]]; then
+            install_deb
+        elif [[ -f /etc/redhat-release ]]; then
+            install_rpm
+        else
+            error "Unsupported Linux distribution for x86_64 architecture"
+        fi
+    elif [[ "${ARCH}" == "aarch64" ]]; then
+        echo "Installing cloudflared for aarch64 architecture"
+        URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64"
+        curl -L "${URL}" -o cloudflared || error "Failed to download cloudflared"
+        sudo mv cloudflared /usr/local/bin/ || error "Failed to move cloudflared to /usr/local/bin/"
+        sudo chmod +x /usr/local/bin/cloudflared || error "Failed to make cloudflared executable"
+    elif [[ "${ARCH}" == "armv7l" ]]; then
+        echo "Installing cloudflared for armv7l architecture"
+        URL="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm"
+        curl -L "${URL}" -o cloudflared || error "Failed to download cloudflared"
+        sudo mv cloudflared /usr/local/bin/ || error "Failed to move cloudflared to /usr/local/bin/"
+        sudo chmod +x /usr/local/bin/cloudflared || error "Failed to make cloudflared executable"
+    else
+        error "Unsupported architecture: ${ARCH}"
+    fi
+}
+
+# Install curl if not already installed
+install_curl
+
+# Download cloudflared
+download_cloudflared
+
+# Verify the installation
+echo "Verifying cloudflared installation"
+cloudflared -v || error "cloudflared verification failed"
+
+# Configure cloudflared
+configure_cloudflared
+
+# Create a systemd service
+create_systemd_service
 
 # Enable and start the cloudflared service
-echo "Enabling and starting the cloudflared service"
-sudo systemctl enable cloudflared || error "Failed to enable cloudflared service"
-sudo systemctl start cloudflared || error "Failed to start cloudflared service"
+enable_and_start_service
 
-# Verify that the service is running
-echo "Verifying that the cloudflared service is running"
-sudo systemctl status cloudflared || error "cloudflared service is not running"
+# Create a cron job for updating cloudflared
+create_cron_job
