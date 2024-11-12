@@ -91,19 +91,19 @@ configure_cloudflared() {
         echo "User cloudflared already exists"
     fi
 
-    if [ ! -d /etc/cloudflared ]; then
-        mkdir -p /etc/cloudflared || error "Failed to create /etc/cloudflared directory"
+    if [ ! -d /opt/cloudflared ]; then
+        mkdir -p /opt/cloudflared || error "Failed to create /opt/cloudflared directory"
     else
-        echo "/etc/cloudflared directory already exists"
+        echo "/opt/cloudflared directory already exists"
     fi
 
-    if [ -f /etc/cloudflared/config.yml ]; then
+    if [ -f /opt/cloudflared/config.yml ]; then
         TIMESTAMP=$(date +%Y%m%d%H%M%S)
-        cp /etc/cloudflared/config.yml /etc/cloudflared/config.yml.bak.${TIMESTAMP} || error "Failed to create backup of existing config file"
+        cp /opt/cloudflared/config.yml /opt/cloudflared/config.yml.bak.${TIMESTAMP} || error "Failed to create backup of existing config file"
         echo "Backup of existing config file created with timestamp ${TIMESTAMP}"
     fi
 
-    tee /etc/cloudflared/config.yml > /dev/null <<EOF
+    tee /opt/cloudflared/config.yml > /dev/null <<EOF
 proxy-dns: true
 proxy-dns-port: 5053
 proxy-dns-upstream:
@@ -132,7 +132,7 @@ After=network.target
 [Service]
 Type=simple
 User=cloudflared
-ExecStart=/usr/local/bin/cloudflared --config /etc/cloudflared/config.yml
+ExecStart=/usr/local/bin/cloudflared --config /opt/cloudflared/config.yml
 Restart=on-failure
 RestartSec=5s
 
@@ -173,8 +173,8 @@ uninstall_cloudflared() {
     systemctl disable cloudflared || error "Failed to disable cloudflared service"
     echo "Removing cloudflared systemd service file"
     rm /etc/systemd/system/cloudflared.service || error "Failed to remove cloudflared systemd service file"
-    echo "Removing /etc/cloudflared directory"
-    rm -rf /etc/cloudflared || error "Failed to remove /etc/cloudflared directory"
+    echo "Removing /opt/cloudflared directory"
+    rm -rf /opt/cloudflared || error "Failed to remove /opt/cloudflared directory"
     echo "Removing cloudflared binary"
     rm /usr/local/bin/cloudflared || error "Failed to remove cloudflared binary"
     echo "Removing cloudflared cron job"

@@ -21,17 +21,17 @@ You can fetch and run the script using either `curl` or `wget`.
 ### Using curl
 
 ```sh
-curl -o install.sh https://raw.githubusercontent.com/marcomc/cloudflared-doh-install/refs/heads/main/cloudflared-doh-install.sh
+curl -o cloudflared-doh-install.sh https://raw.githubusercontent.com/marcomc/cloudflared-doh-install/refs/heads/main/cloudflared-doh-install.sh
 chmod +x install.sh
-sudo ./install.sh
+sudo ./cloudflared-doh-install.sh
 ```
 
 ### Using wget
 
 ```sh
 wget https://raw.githubusercontent.com/marcomc/cloudflared-doh-install/refs/heads/main/cloudflared-doh-install.sh
-chmod +x install.sh
-sudo ./install.sh
+chmod +x cloudflared-doh-install.sh
+sudo ./cloudflared-doh-install.sh
 ```
 
 ## Configuring Pi-hole
@@ -44,3 +44,15 @@ After installing cloudflared, you need to configure Pi-hole to use it as a DNS-o
 4. Scroll down and click **Save**.
 
 For more detailed instructions, please refer to the [official Pi-hole documentation](https://docs.pi-hole.net/guides/dns/cloudflared/).
+
+## Uninstalling cloudflared
+
+If you need to uninstall cloudflared, you can use the `--uninstall` option with the script:
+
+1. Run the uninstall command:
+
+    ```sh
+    sudo ./cloudflared-doh-install.sh --uninstall
+    ```
+
+This will stop the cloudflared service, disable it, and remove the cloudflared binary and configuration directory.
