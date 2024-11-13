@@ -8,14 +8,9 @@ teardown() {
   sudo ./cloudflared-doh-install.sh --uninstall
 }
 
-@test "Install cloudflared" {
-  run sudo ./cloudflared-doh-install.sh
-  [ "$status" -eq 0 ]
+@test "Verify cloudflared service status" {
   run cloudflared -v
   [ "$status" -eq 0 ]
-}
-
-@test "Verify cloudflared service status" {
   run sudo systemctl status cloudflared
   [ "$status" -eq 0 ]
 }
