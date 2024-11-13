@@ -5,7 +5,7 @@ setup() {
 }
 
 @test "Test install" {
-  sudo ./cloudflared-doh-install.sh --install
+  sudo ./cloudflared-doh-install.sh
   [ "$status" -eq 0 ]
 }
 

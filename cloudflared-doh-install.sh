@@ -22,7 +22,7 @@ error() {
 }
 
 # Function to display help message
-show_help() {
+usage() {
     echo "Usage: $0 [OPTIONS]"
     echo "Options:"
     echo "  --help       Show this help message and exit"
@@ -34,10 +34,14 @@ show_help() {
 parse_arguments() {
     while [[ "$#" -gt 0 ]]; do
         case $1 in
-            --help) show_help; exit 0 ;;
+            --help) usage; exit 0 ;;
             --uninstall) uninstall_cloudflared; exit 0 ;;
             --port) PORT="$2"; shift ;;
-            *) error "Unknown option: $1";;
+            *) 
+                echo "ERROR: Unknown option: $1" >&2
+                usage >&2
+                exit 1
+                ;;
         esac
         shift
     done
