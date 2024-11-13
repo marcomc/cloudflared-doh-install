@@ -2,6 +2,7 @@
 
 setup() {
   chmod +x ./cloudflared-doh-install.sh
+  sudo ./cloudflared-doh-install.sh
 }
 
 teardown() {
