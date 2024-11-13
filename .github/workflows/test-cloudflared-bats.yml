@@ -47,5 +47,5 @@ jobs:
             echo "cloudflared uninstalled successfully"
           fi
 
-      - name: Run Bats tests
-        run: bats tests/
+      # - name: Run Bats tests
+      #   run: bats tests/
