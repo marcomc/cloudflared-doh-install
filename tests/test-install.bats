@@ -29,9 +29,13 @@ setup() {
     run sudo systemctl status cloudflared
     [ "$status" -ne 0 ]
 }
-@test "Test DNS resolution" {
+
+@test "Start cloudflared service" {
   run sudo systemctl start cloudflared
   [ "$status" -eq 0 ]
+}
+
+@test "Test DNS resolution" {
   run dig @localhost -p 5053 txt debug.opendns.com
   [ "$status" -eq 0 ]
 }

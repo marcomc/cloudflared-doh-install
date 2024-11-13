@@ -52,12 +52,12 @@ install_curl() {
     if ! command -v curl &> /dev/null; then
         if command -v apt-get &> /dev/null; then
             echo "Installing curl using apt-get"
-            apt-get update || error "Failed to update package list"
-            apt-get install -y curl || error "Failed to install curl"
+            apt-get update -q || error "Failed to update package list"
+            apt-get install -y -q curl || error "Failed to install curl"
         elif command -v yum &> /dev/null; then
             echo "Installing curl using yum"
-            yum update -y || error "Failed to update package list"
-            yum install -y curl || error "Failed to install curl"
+            yum update -y -q || error "Failed to update package list"
+            yum install -y -q curl || error "Failed to install curl"
         else
             error "Unsupported package manager"
         fi
@@ -70,7 +70,7 @@ install_curl() {
 install_deb() {
     echo "Installing cloudflared on DEB-based system"
     wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb || error "Failed to download cloudflared DEB package"
-    apt-get install -y ./cloudflared-linux-amd64.deb || error "Failed to install cloudflared DEB package"
+    apt-get install -y -q ./cloudflared-linux-amd64.deb || error "Failed to install cloudflared DEB package"
     rm cloudflared-linux-amd64.deb
 }
 
@@ -78,7 +78,7 @@ install_deb() {
 install_rpm() {
     echo "Installing cloudflared on RPM-based system"
     wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-x86_64.rpm || error "Failed to download cloudflared RPM package"
-    yum install -y ./cloudflared-linux-x86_64.rpm || error "Failed to install cloudflared RPM package"
+    yum install -y -q ./cloudflared-linux-x86_64.rpm || error "Failed to install cloudflared RPM package"
     rm cloudflared-linux-x86_64.rpm
 }
 
@@ -203,10 +203,10 @@ uninstall_cloudflared() {
     
     if [[ -f /etc/debian_version ]]; then
         echo "Uninstalling cloudflared package on DEB-based system"
-        apt-get remove -y cloudflared || error "Failed to uninstall cloudflared package"
+        apt-get remove -y -q cloudflared || error "Failed to uninstall cloudflared package"
     elif [[ -f /etc/redhat-release ]]; then
         echo "Uninstalling cloudflared package on RPM-based system"
-        yum remove -y cloudflared || error "Failed to uninstall cloudflared package"
+        yum remove -y -q cloudflared || error "Failed to uninstall cloudflared package"
     fi
     
     echo "Reloading systemd daemon"
@@ -241,3 +241,7 @@ enable_and_start_service
 
 # Create a cron job for updating cloudflared
 create_cron_job
+
+echo "cloudflared with DoH installation completed successfully"
+
+exit 0
