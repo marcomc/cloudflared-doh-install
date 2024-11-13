@@ -2,11 +2,11 @@
 
 setup() {
   chmod +x ./cloudflared-doh-install.sh
-  sudo ./cloudflared-doh-install.sh
 }
 
-teardown() {
-  sudo ./cloudflared-doh-install.sh --uninstall
+@test "Test install" {
+  sudo ./cloudflared-doh-install.sh --install
+  [ "$status" -eq 0 ]
 }
 
 @test "Verify cloudflared service status" {
@@ -33,5 +33,10 @@ teardown() {
   run sudo systemctl start cloudflared
   [ "$status" -eq 0 ]
   run dig @localhost -p 5053 txt debug.opendns.com
+  [ "$status" -eq 0 ]
+}
+
+@test "Test uninstall" {
+  sudo ./cloudflared-doh-install.sh --uninstall
   [ "$status" -eq 0 ]
 }
