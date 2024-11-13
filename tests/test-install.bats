@@ -1,15 +1,15 @@
 #!/usr/bin/env bats
 
 setup() {
-  chmod +x ../cloudflared-doh-install.sh
+  chmod +x ./cloudflared-doh-install.sh
 }
 
 teardown() {
-  sudo ../cloudflared-doh-install.sh --uninstall
+  sudo ./cloudflared-doh-install.sh --uninstall
 }
 
 @test "Install cloudflared" {
-  run sudo ../cloudflared-doh-install.sh
+  run sudo ./cloudflared-doh-install.sh
   [ "$status" -eq 0 ]
   run cloudflared -v
   [ "$status" -eq 0 ]

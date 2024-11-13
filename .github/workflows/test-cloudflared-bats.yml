@@ -21,31 +21,5 @@ jobs:
       - name: Run ShellCheck
         run: shellcheck cloudflared-doh-install.sh
 
-      - name: Run install script
-        run: |
-          chmod +x cloudflared-doh-install.sh
-          sudo ./cloudflared-doh-install.sh
-
-      - name: Verify cloudflared installation
-        run: |
-          cloudflared -v
-          sudo systemctl status cloudflared
-
-      - name: Test DNS resolution
-        run: |
-          sudo systemctl start cloudflared
-          dig @localhost -p 5053 txt debug.opendns.com
-
       - name: Run Bats tests
         run: bats tests/
-
-      - name: Run uninstall script
-        run: sudo ./cloudflared-doh-install.sh --uninstall
-
-      - name: Verify uninstallation
-        run: |
-          if command -v cloudflared &> /dev/null; then
-            echo "cloudflared is still installed" && exit 1
-          else
-            echo "cloudflared uninstalled successfully"
-          fi
