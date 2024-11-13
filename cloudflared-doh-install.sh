@@ -196,6 +196,15 @@ uninstall_cloudflared() {
     rm /etc/cron.d/cloudflared-update || error "Failed to remove cloudflared cron job"
     echo "Deleting cloudflared user"
     userdel cloudflared || error "Failed to delete cloudflared user"
+    
+    if [[ -f /etc/debian_version ]]; then
+        echo "Uninstalling cloudflared package on DEB-based system"
+        apt-get remove -y cloudflared || error "Failed to uninstall cloudflared package"
+    elif [[ -f /etc/redhat-release ]]; then
+        echo "Uninstalling cloudflared package on RPM-based system"
+        yum remove -y cloudflared || error "Failed to uninstall cloudflared package"
+    fi
+    
     echo "Reloading systemd daemon"
     systemctl daemon-reload || error "Failed to reload systemd daemon"
     echo "cloudflared uninstalled successfully"
