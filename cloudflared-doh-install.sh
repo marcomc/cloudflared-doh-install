@@ -2,6 +2,19 @@
 
 set -e
 
+# Detect the architecture
+ARCH=$(uname -m)
+echo "Detected architecture: ${ARCH}"
+
+# Default port
+PORT=5053
+
+# Array of DNS over HTTPS upstream servers
+DNS_UPSTREAM_SERVERS=(
+    "https://doh.la.ahadns.net/dns-query"
+    "https://dns.digitale-gesellschaft.ch/dns-query"
+)
+
 # Function to print error messages to STDERR and abort the script
 error() {
     echo "ERROR: $*" >&2
@@ -14,11 +27,21 @@ show_help() {
     echo "Options:"
     echo "  --help       Show this help message and exit"
     echo "  --uninstall  Uninstall cloudflared and remove all files created by the script"
+    echo "  --port PORT  Specify a custom port for the DNS over HTTPS proxy (default: 5053)"
 }
 
-# Detect the architecture
-ARCH=$(uname -m)
-echo "Detected architecture: ${ARCH}"
+# Function to parse command line arguments
+parse_arguments() {
+    while [[ "$#" -gt 0 ]]; do
+        case $1 in
+            --help) show_help; exit 0 ;;
+            --uninstall) uninstall_cloudflared; exit 0 ;;
+            --port) PORT="$2"; shift ;;
+            *) error "Unknown option: $1";;
+        esac
+        shift
+    done
+}
 
 # Function to install curl based on the package manager
 install_curl() {
@@ -91,34 +114,26 @@ configure_cloudflared() {
         echo "User cloudflared already exists"
     fi
 
-    if [ ! -d /opt/cloudflared ]; then
+    if [[ ! -d /opt/cloudflared ]]; then
         mkdir -p /opt/cloudflared || error "Failed to create /opt/cloudflared directory"
     else
         echo "/opt/cloudflared directory already exists"
     fi
 
-    if [ -f /opt/cloudflared/config.yml ]; then
+    if [[ -f /opt/cloudflared/config.yml ]]; then
         TIMESTAMP=$(date +%Y%m%d%H%M%S)
-        cp /opt/cloudflared/config.yml /opt/cloudflared/config.yml.bak.${TIMESTAMP} || error "Failed to create backup of existing config file"
+        cp /opt/cloudflared/config.yml "/opt/cloudflared/config.yml.bak.${TIMESTAMP}" || error "Failed to create backup of existing config file"
         echo "Backup of existing config file created with timestamp ${TIMESTAMP}"
     fi
 
-    tee /opt/cloudflared/config.yml > /dev/null <<EOF
-proxy-dns: true
-proxy-dns-port: 5053
-proxy-dns-upstream:
-#  - https://1.1.1.1/dns-query
-#  - https://1.0.0.1/dns-query
-# "doh.la.ahadns.net" is a public DNS over HTTPS server operated by AhaDNS
-# A zero logging DNS with support for DNS-over-HTTPS (DoH) & DNS-over-TLS (DoT).
-# Blocks ads, malware, trackers, viruses, ransomware, telemetry and more.
-# No persistent logs. DNSSEC. Hosted in Amsterdam, Netherlands
- - https://doh.la.ahadns.net/dns-query
-# Public DoH resolver operated by the Digital Society (https://www.digitale-gesellschaft.ch).
-# Hosted in Zurich, Switzerland. Non-logging, non-filtering, supports DNSSEC.
- - https://dns.digitale-gesellschaft.ch/dns-query
-
-EOF
+    {
+        echo "proxy-dns: true"
+        echo "proxy-dns-port: ${PORT}"
+        echo "proxy-dns-upstream:"
+        for server in "${DNS_UPSTREAM_SERVERS[@]}"; do
+            echo " - ${server}"
+        done
+    } > /opt/cloudflared/config.yml
 }
 
 # Function to create a systemd service for cloudflared
@@ -186,17 +201,11 @@ uninstall_cloudflared() {
     echo "cloudflared uninstalled successfully"
 }
 
+# Parse command line arguments
+parse_arguments "$@"
+
 # Install curl if not already installed
 install_curl
-
-# Parse command line arguments
-if [[ "$1" == "--help" ]]; then
-    show_help
-    exit 0
-elif [[ "$1" == "--uninstall" ]]; then
-    uninstall_cloudflared
-    exit 0
-fi
 
 # Download cloudflared
 if ! command -v cloudflared &> /dev/null; then
