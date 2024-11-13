@@ -5,7 +5,7 @@ setup() {
 }
 
 @test "Test install" {
-  sudo ./cloudflared-doh-install.sh
+  run sudo ./cloudflared-doh-install.sh
   [ "$status" -eq 0 ]
 }
 
@@ -41,6 +41,6 @@ setup() {
 }
 
 @test "Test uninstall" {
-  sudo ./cloudflared-doh-install.sh --uninstall
+  run sudo ./cloudflared-doh-install.sh --uninstall
   [ "$status" -eq 0 ]
 }
