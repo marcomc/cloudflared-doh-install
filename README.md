@@ -17,22 +17,8 @@ Using cloudflared with Pi-hole to enable DNS-over-HTTPS (DoH) provides several b
 
 ## How to Run the Script
 
-You can fetch and run the script using either `curl` or `wget`.
-
-### Using curl
-
 ```sh
-curl -o cloudflared-doh-install.sh https://raw.githubusercontent.com/marcomc/cloudflared-doh-install/refs/heads/main/cloudflared-doh-install.sh
-chmod +x cloudflared-doh-install.sh
-sudo ./cloudflared-doh-install.sh
-```
-
-### Using wget
-
-```sh
-wget https://raw.githubusercontent.com/marcomc/cloudflared-doh-install/refs/heads/main/cloudflared-doh-install.sh
-chmod +x cloudflared-doh-install.sh
-sudo ./cloudflared-doh-install.sh
+sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/marcomc/cloudflared-doh-install/refs/heads/main/cloudflared-doh-install.sh)"
 ```
 
 ## Configuring Pi-hole
